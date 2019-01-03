@@ -31,7 +31,7 @@ class BELRepository:
     output_directory: Optional[str] = None
     bel_cache_name = 'union'
     bel_metadata: Optional[BELMetadata] = None
-    formats: Tuple[str] = ('pickle', 'json')
+    formats: Tuple[str, ...] = ('pickle', 'json')
     cache_fmt = '{file_name}.{extension}'
     warnings_fmt = '{file_name}.warnings.tsv'
 
@@ -88,6 +88,8 @@ class BELRepository:
             _, importer = IO_MAPPING[extension]
             if importer is not None and os.path.exists(path):
                 return importer(path)
+
+        return None
 
     def _import_global(self) -> Optional[BELGraph]:
         return self._import_local(self._cache_directory, self.bel_cache_name)
