@@ -259,7 +259,7 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
         elif extensions and not has_warnings:
             s = click.style('✔︎ ', fg='green')
         else:
-            s = click.style('?︎ ', fg='yellow', bold=True)
+            s = click.style('? ', fg='yellow', bold=True)
 
         path = os.path.join(root, file_name)
         s += path
