@@ -41,7 +41,7 @@ class BELRepository:
         return os.path.join(self._cache_directory, f'{self.bel_cache_name}_summary.tsv')
 
     @property
-    def _cache_directory(self) -> str:
+    def _cache_directory(self) -> str:  # noqa: D401
         """The output directory (defaults to input directory if not set)."""
         return self.output_directory or self.directory
 
@@ -234,7 +234,7 @@ class BELRepository:
         return self.get_extensions(self._cache_directory, self.bel_cache_name)
 
 
-def append_click_group(main: click.Group) -> None:
+def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
     """Append a :py:class:`click.Group`."""
 
     @main.command()
