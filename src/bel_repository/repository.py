@@ -105,7 +105,7 @@ class BELRepository:
             warnings_path = self._build_warnings_path(root, file_name)
             df = pd.DataFrame([
                 (exc.line_number, exc.position, exc.line, exc.__class__.__name__, str(exc))
-                for _, _, exc, _ in graph.warnings
+                for _, exc, _ in graph.warnings
             ], columns=['Line Number', 'Position', 'Line', 'Error', 'Message'])
             df.to_csv(warnings_path, sep='\t', index=False)
 
