@@ -29,16 +29,19 @@ class BELRepository:
 
     directory: str
     output_directory: Optional[str] = None
-    bel_cache_name = 'union'
+
+    bel_cache_name: str = '_cache'
     bel_metadata: Optional[BELMetadata] = None
     formats: Tuple[str, ...] = ('pickle', 'json')
-    cache_fmt = '{file_name}.{extension}'
-    warnings_fmt = '{file_name}.warnings.tsv'
+
+    cache_fmt: str = '{file_name}.{extension}'
+    summary_fmt: str = '{file_name}.summary.tsv'
+    warnings_fmt: str = '{file_name}.warnings.tsv'
 
     @property
     def bel_summary_path(self) -> str:  # noqa: D401
         """The location where the summary DataFrame will be output as a TSV."""
-        return os.path.join(self._cache_directory, f'{self.bel_cache_name}_summary.tsv')
+        return os.path.join(self._cache_directory, self.summary_fmt.format(file_name=self.bel_cache_name))
 
     @property
     def _cache_directory(self) -> str:  # noqa: D401
