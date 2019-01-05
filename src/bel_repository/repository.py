@@ -64,8 +64,8 @@ class BELRepository:
     def iterate_bel(self) -> Iterable[Tuple[str, str]]:
         """Yield all paths to BEL documents."""
         for root, dirs, file_names in self.walk():
-            for file_name in file_names:
                 if file_name.endswith('.bel'):
+            for file_name in sorted(file_names):
                     yield root, file_name
 
     def clear_global_cache(self):
