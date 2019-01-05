@@ -267,6 +267,7 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
             s = click.style('? ', fg='yellow', bold=True)
 
         path = os.path.join(root, file_name)
+        path = os.path.relpath(path, bel_repository.directory)
         s += path
 
         if extensions:
