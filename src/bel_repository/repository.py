@@ -300,8 +300,9 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
     @main.command()
     @connection_option
     @click.option('--reload', is_flag=True)
+    @click.option('--no-tqdm', is_flag=True)
     @click.pass_obj
-    def build(bel_repository: BELRepository, connection: str, reload: bool):
+    def build(bel_repository: BELRepository, connection: str, reload: bool, no_tqdm: bool):
         """Summarize the repository."""
         if reload:
             bel_repository.clear_global_cache()
@@ -311,13 +312,13 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
         graph = bel_repository.get_graph(
             manager=manager,
             use_cached=(not reload),
-            use_tqdm=True,
+            use_tqdm=(not no_tqdm),
             tqdm_kwargs=dict(
                 desc='Loading BEL',
                 leave=False,
             ),
             from_path_kwargs=dict(
-                use_tqdm=True,
+                use_tqdm=(not no_tqdm),
                 tqdm_kwargs=dict(
                     leave=False,
                 ),
