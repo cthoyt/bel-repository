@@ -70,14 +70,14 @@ class BELRepository:
 
     def clear_global_cache(self):
         """Clear the global cache."""
-        self._remove_root_name(self._cache_directory, self.bel_cache_name)
+        self._remove_root_file_name(self._cache_directory, self.bel_cache_name)
 
     def clear_local_caches(self):
         """Clear all caches of BEL documents in the repository."""
         for root, file_name in self.iterate_bel():
-            self._remove_root_name(root, file_name)
+            self._remove_root_file_name(root, file_name)
 
-    def _remove_root_name(self, root: str, file_name: str) -> None:
+    def _remove_root_file_name(self, root: str, file_name: str) -> None:
         for extension, path in self._iterate_extension_path(root, file_name):
             if os.path.exists(path):
                 os.remove(path)
