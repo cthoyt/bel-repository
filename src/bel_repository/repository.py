@@ -2,10 +2,11 @@
 
 """Utilities for BEL repositories."""
 
+import json
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Optional, Set, Tuple, Union
+from typing import Any, Iterable, Mapping, Optional, Set, TextIO, Tuple, Union
 
 import click
 import pandas as pd
@@ -13,7 +14,7 @@ from tqdm import tqdm
 
 from pybel import BELGraph, Manager, from_path, union
 from pybel.cli import connection_option
-from .constants import IO_MAPPING, OUTPUT_KWARGS
+from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS, to_summary_json
 from .metadata import BELMetadata
 
 __all__ = [
@@ -22,7 +23,6 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class BELRepository:
     """A container for a BEL repository."""
@@ -30,18 +30,23 @@ class BELRepository:
     directory: str
     output_directory: Optional[str] = None
 
-    bel_cache_name: str = '_cache'
+    bel_cache_name: str = '_cache.bel'
     bel_metadata: Optional[BELMetadata] = None
-    formats: Tuple[str, ...] = ('pickle', 'json')
+    formats: Tuple[str, ...] = ('pickle', 'json', 'summary.json')
 
+    #: Must include {file_name} and {extension}
     cache_fmt: str = '{file_name}.{extension}'
-    summary_fmt: str = '{file_name}.summary.tsv'
-    warnings_fmt: str = '{file_name}.warnings.tsv'
+    global_summary_ext: str = 'summary.tsv'
+    warnings_ext: str = 'warnings.tsv'
 
     @property
     def bel_summary_path(self) -> str:  # noqa: D401
         """The location where the summary DataFrame will be output as a TSV."""
-        return os.path.join(self._cache_directory, self.summary_fmt.format(file_name=self.bel_cache_name))
+        return self._build_cache_ext_path(
+            root=self._cache_directory,
+            file_name=self.bel_cache_name,
+            extension=self.global_summary_ext.lstrip('.'),
+        )
 
     @property
     def _cache_directory(self) -> str:  # noqa: D401
@@ -52,10 +57,13 @@ class BELRepository:
         return self._build_cache_ext_path(self._cache_directory, self.bel_cache_name, extension)
 
     def _build_cache_ext_path(self, root: str, file_name: str, extension: str) -> str:
-        return os.path.join(root, self.cache_fmt.format(file_name=file_name, extension=extension))
+        return os.path.join(root, self.cache_fmt.format(file_name=file_name, extension=extension.lstrip('.')))
 
     def _build_warnings_path(self, root: str, file_name: str) -> str:
-        return os.path.join(root, self.warnings_fmt.format(file_name=file_name))
+        return self._build_cache_ext_path(root, file_name, self.warnings_ext.lstrip('.'))
+
+    def _build_summary_path(self, root: str, file_name: str) -> str:
+        return self._build_cache_ext_path(root, file_name, LOCAL_SUMMARY_EXT)
 
     def walk(self) -> Iterable[Tuple[str, Iterable[str], Iterable[str]]]:
         """Recursively walk this directory."""
@@ -64,15 +72,15 @@ class BELRepository:
     def iterate_bel(self) -> Iterable[Tuple[str, str]]:
         """Yield all paths to BEL documents."""
         for root, dirs, file_names in self.walk():
-                if file_name.endswith('.bel'):
             for file_name in sorted(file_names):
+                if not file_name.startswith('_') and file_name.endswith('.bel'):
                     yield root, file_name
 
-    def clear_global_cache(self):
+    def clear_global_cache(self) -> None:
         """Clear the global cache."""
         self._remove_root_file_name(self._cache_directory, self.bel_cache_name)
 
-    def clear_local_caches(self):
+    def clear_local_caches(self) -> None:
         """Clear all caches of BEL documents in the repository."""
         for root, file_name in self.iterate_bel():
             self._remove_root_file_name(root, file_name)
@@ -106,14 +114,14 @@ class BELRepository:
         if graph.warnings:
             logger.info(f' - {graph.number_of_warnings()} warnings')
             warnings_path = self._build_warnings_path(root, file_name)
-            df = pd.DataFrame([
+            warnings_df = pd.DataFrame([
                 (exc.line_number, exc.position, exc.line, exc.__class__.__name__, str(exc))
                 for _, exc, _ in graph.warnings
             ], columns=['Line Number', 'Position', 'Line', 'Error', 'Message'])
-            df.to_csv(warnings_path, sep='\t', index=False)
+            warnings_df.to_csv(warnings_path, sep='\t', index=False)
 
     def _export_global(self, graph: BELGraph) -> None:
-        return self._export_local(graph, self._cache_directory, self.bel_cache_name)
+        self._export_local(graph, self._cache_directory, self.bel_cache_name)
 
     def get_graph(self,
                   manager: Optional[Manager] = None,
@@ -139,6 +147,7 @@ class BELRepository:
         if self.bel_metadata is not None:
             self.bel_metadata.update(graph)
 
+        self._get_summary_df_from_graphs(graphs)
         self._export_global(graph)
 
         return graph
@@ -184,7 +193,7 @@ class BELRepository:
                        use_tqdm: bool = False,
                        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
                        from_path_kwargs: Optional[Mapping[str, Any]] = None,
-                       save: Union[bool, str] = True
+                       save: Union[bool, str, TextIO] = True
                        ) -> pd.DataFrame:
         """Get a pandas DataFrame summarizing the contents of all graphs in the repository."""
         graphs = self.get_graphs(
@@ -194,18 +203,15 @@ class BELRepository:
             tqdm_kwargs=tqdm_kwargs,
             from_path_kwargs=from_path_kwargs,
         )
+        return self._get_summary_df_from_graphs(graphs, save=save)
 
-        df = pd.DataFrame.from_dict(
-            {
-                path: dict(
-                    title=graph.name,
-                    author=graph.authors,
-                    **graph.summary_dict(),
-                )
-                for path, graph in graphs.items()
-            },
-            orient='index',
-        )
+    def _get_summary_df_from_graphs(self, graphs, save: Union[str, bool, TextIO] = True):
+        summary_dicts = {
+            os.path.relpath(path, self.directory): to_summary_json(graph)
+            for path, graph in graphs.items()
+        }
+
+        df = pd.DataFrame.from_dict(summary_dicts, orient='index')
 
         if isinstance(save, str):
             df.to_csv(save, sep='\t')
@@ -259,6 +265,12 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
         extensions = ', '.join(sorted(bel_repository.get_extensions(root, file_name)))
         has_warnings = os.path.exists(bel_repository._build_warnings_path(root, file_name))
 
+        try:
+            with open(bel_repository._build_summary_path(root, file_name)) as file:
+                summary = json.load(file)
+        except FileNotFoundError:
+            summary = None
+
         if extensions and has_warnings:
             s = click.style('✘️ ', fg='red')
         elif extensions and not has_warnings:
@@ -267,11 +279,13 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
             s = click.style('? ', fg='yellow', bold=True)
 
         path = os.path.join(root, file_name)
-        path = os.path.relpath(path, bel_repository.directory)
-        s += path
+        s += os.path.relpath(path, bel_repository.directory)
 
         if extensions:
             s += click.style(f' ({extensions})', fg='green')
+
+        if summary:
+            s += click.style(f' ({summary["Number of Nodes"]} nodes, {summary["Number of Edges"]} edges)', fg='blue')
 
         click.echo(s)
 
@@ -302,7 +316,7 @@ def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
     @click.option('--reload', is_flag=True)
     @click.option('--no-tqdm', is_flag=True)
     @click.pass_obj
-    def build(bel_repository: BELRepository, connection: str, reload: bool, no_tqdm: bool):
+    def compile(bel_repository: BELRepository, connection: str, reload: bool, no_tqdm: bool):
         """Summarize the repository."""
         if reload:
             bel_repository.clear_global_cache()
