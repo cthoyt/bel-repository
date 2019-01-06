@@ -23,6 +23,7 @@ __all__ = [
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BELRepository:
     """A container for a BEL repository."""
