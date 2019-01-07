@@ -20,6 +20,7 @@ from .utils import to_summary_json
 
 __all__ = [
     'BELRepository',
+    'append_click_group',
 ]
 
 logger = logging.getLogger(__name__)
@@ -195,7 +196,7 @@ class BELRepository:
                        use_tqdm: bool = False,
                        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
                        from_path_kwargs: Optional[Mapping[str, Any]] = None,
-                       save: Union[bool, str, TextIO] = True
+                       save: Union[bool, str, TextIO] = True,
                        ) -> pd.DataFrame:
         """Get a pandas DataFrame summarizing the contents of all graphs in the repository."""
         graphs = self.get_graphs(
