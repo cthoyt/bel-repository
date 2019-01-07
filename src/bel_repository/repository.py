@@ -14,8 +14,9 @@ from tqdm import tqdm
 
 from pybel import BELGraph, Manager, from_path, union
 from pybel.cli import connection_option
-from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS, to_summary_json
+from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS
 from .metadata import BELMetadata
+from .utils import to_summary_json
 
 __all__ = [
     'BELRepository',
