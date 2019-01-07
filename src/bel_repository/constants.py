@@ -3,7 +3,6 @@
 """Constants for BEL repositories."""
 
 from pybel import from_json_path, from_pickle, to_json_path, to_pickle
-
 from .utils import to_summary_json_path
 
 __all__ = [
