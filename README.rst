@@ -1,5 +1,5 @@
-BEL Repository |build|
-======================
+BEL Repository |build| |zenodo|
+===============================
 A utility for loading data from repositories of BEL documents with PyBEL [1]_.
 
 Installation |pypi_version| |python_versions| |pypi_license|
@@ -42,3 +42,6 @@ References
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/bel_repository.svg
     :alt: License
+
+.. |zenodo| image:: https://zenodo.org/badge/162814995.svg
+   :target: https://zenodo.org/badge/latestdoi/162814995
