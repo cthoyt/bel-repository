@@ -20,10 +20,16 @@ Usage
 -----
 .. code-block:: python
 
+    from typing import Mapping
+
     from bel_repository import BELRepository
-    path = '/path/to/folder/with/bel/'
-    r = BELRepository(path)
-    graphs = r.get_graphs()
+    from pybel import BELGraph
+
+    # Build a repository by giving a folder
+    bel_repository = BELRepository('/path/to/folder/with/bel/')
+
+    # Get a mapping from paths to graphs
+    graphs: Mapping[str, BELGraph] = bel_repository.get_graphs()
 
 
 References
