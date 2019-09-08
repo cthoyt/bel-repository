@@ -15,7 +15,7 @@ import click
 import pandas as pd
 from tqdm import tqdm
 
-from pybel import BELGraph, Manager, from_path, to_indra_statements, to_web, union
+from pybel import BELGraph, Manager, from_bel_script, to_indra_statements, to_web, union
 from pybel.cli import connection_option, host_option
 from pybel.constants import CITATION, CITATION_REFERENCE, CITATION_TYPE
 from pybel.manager.citation_utils import enrich_pubmed_citations
@@ -40,7 +40,7 @@ class BELRepository:
 
     bel_cache_name: str = '_cache.bel'
     metadata: Optional[BELMetadata] = None
-    formats: Tuple[str, ...] = ('pickle', 'json', 'summary.json')
+    formats: Tuple[str, ...] = ('pickle', 'nodelink.json', 'summary.json')
 
     #: Must include {file_name} and {extension}
     cache_fmt: str = '{file_name}.{extension}'
@@ -212,7 +212,7 @@ class BELRepository:
             _from_path_kwargs.update(self.from_path_kwargs)
 
             try:
-                graph = rv[path] = from_path(path, manager=manager, **_from_path_kwargs)
+                graph = rv[path] = from_bel_script(path, manager=manager, **_from_path_kwargs)
                 graph.path = os.path.relpath(os.path.join(root, file_name), self.directory)
             except Exception as exc:
                 logger.warning(f'problem with {path}: {exc}')

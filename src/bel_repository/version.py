@@ -11,5 +11,5 @@ VERSION = '0.0.9-dev'
 
 
 def get_version() -> str:
-    """Get the software verison of :mod:`bel-repository`."""
+    """Get the software version of :mod:`bel-repository`."""
     return VERSION
