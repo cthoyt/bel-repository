@@ -15,6 +15,7 @@ import click
 import pandas as pd
 from tqdm import tqdm
 
+import pybel
 from pybel import BELGraph, Manager, from_bel_script, to_indra_statements, to_web, union
 from pybel.cli import connection_option, host_option
 from pybel.constants import CITATION, CITATION_REFERENCE, CITATION_TYPE
@@ -22,6 +23,7 @@ from pybel.manager.citation_utils import enrich_pubmed_citations
 from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS
 from .metadata import BELMetadata
 from .utils import to_summary_json
+from .version import get_version
 
 __all__ = [
     'BELRepository',
@@ -143,12 +145,12 @@ class BELRepository:
         self._export_local(graph, self.output_directory, self.bel_cache_name)
 
     def get_graph(
-            self,
-            manager: Optional[Manager] = None,
-            use_cached: bool = True,
-            use_tqdm: bool = False,
-            tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-            from_path_kwargs: Optional[Mapping[str, Any]] = None,
+        self,
+        manager: Optional[Manager] = None,
+        use_cached: bool = True,
+        use_tqdm: bool = False,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+        from_path_kwargs: Optional[Mapping[str, Any]] = None,
     ) -> BELGraph:
         """Get a combine graph."""
         if use_cached:
@@ -183,12 +185,12 @@ class BELRepository:
         ))
 
     def get_graphs(
-            self,
-            manager: Optional[Manager] = None,
-            use_cached: bool = True,
-            use_tqdm: bool = False,
-            tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-            from_path_kwargs: Optional[Mapping[str, Any]] = None,
+        self,
+        manager: Optional[Manager] = None,
+        use_cached: bool = True,
+        use_tqdm: bool = False,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+        from_path_kwargs: Optional[Mapping[str, Any]] = None,
     ) -> Mapping[str, BELGraph]:
         """Get a mapping of all graphs' paths to their compiled BEL graphs."""
         if manager is None:
@@ -224,13 +226,13 @@ class BELRepository:
         return rv
 
     def get_summary_df(
-            self,
-            manager: Optional[Manager] = None,
-            use_cached: bool = False,
-            use_tqdm: bool = False,
-            tqdm_kwargs: Optional[Mapping[str, Any]] = None,
-            from_path_kwargs: Optional[Mapping[str, Any]] = None,
-            save: Union[bool, str, TextIO] = True,
+        self,
+        manager: Optional[Manager] = None,
+        use_cached: bool = False,
+        use_tqdm: bool = False,
+        tqdm_kwargs: Optional[Mapping[str, Any]] = None,
+        from_path_kwargs: Optional[Mapping[str, Any]] = None,
+        save: Union[bool, str, TextIO] = True,
     ) -> pd.DataFrame:
         """Get a pandas DataFrame summarizing the contents of all graphs in the repository."""
         graphs = self.get_graphs(
@@ -260,7 +262,8 @@ class BELRepository:
     def build_cli(self):  # noqa: D202
         """Build a command line interface."""
 
-        @click.group(help=f'Tools for the BEL repository at {self.directory}')
+        @click.group(help=f'Tools for the BEL repository at {self.directory} using PyBEL v{pybel.get_version()}'
+                          f' and bel-repository v{get_version()}')
         @click.pass_context
         def main(ctx):
             """Group the commands."""
