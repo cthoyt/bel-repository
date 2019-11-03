@@ -18,7 +18,7 @@ from tqdm import tqdm
 import pybel
 from pybel import BELGraph, Manager, from_bel_script, to_indra_statements, to_web, union
 from pybel.cli import connection_option, host_option
-from pybel.constants import CITATION, CITATION_REFERENCE, CITATION_TYPE
+from pybel.constants import CITATION, CITATION_IDENTIFIER, CITATION_DB
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS
 from .metadata import BELMetadata
@@ -289,7 +289,7 @@ class BELRepository:
         for _, _, data in self.get_graph(**kwargs).edges(data=True):
             citation = data.get(CITATION)
             if citation is not None:
-                yield citation[CITATION_TYPE], citation[CITATION_REFERENCE]
+                yield citation[CITATION_DB], citation[CITATION_IDENTIFIER]
 
 
 def append_click_group(main: click.Group) -> None:  # noqa: D202, C901
