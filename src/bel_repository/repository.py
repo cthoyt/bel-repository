@@ -18,7 +18,7 @@ from tqdm import tqdm
 import pybel
 from pybel import BELGraph, Manager, from_bel_script, to_indra_statements, to_web, union
 from pybel.cli import connection_option, host_option
-from pybel.constants import CITATION, CITATION_IDENTIFIER, CITATION_DB
+from pybel.constants import CITATION, CITATION_DB, CITATION_IDENTIFIER
 from pybel.manager.citation_utils import enrich_pubmed_citations
 from .constants import IO_MAPPING, LOCAL_SUMMARY_EXT, OUTPUT_KWARGS
 from .metadata import BELMetadata
